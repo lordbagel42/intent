@@ -121,6 +121,18 @@ make test    # cargo nextest run --workspace (needs cargo-nextest: cargo install
 make build   # cargo build --workspace
 ```
 
+To manage submodules yourself, clone without `--recurse-submodules` and set
+`SKIP_SUBMODULES=1` for Make targets. The host bootstrap also accepts
+`scripts/bootstrap-dev-host.sh --skip-submodules`. These options suppress
+automatic initialization only; builds still need their required component
+sources, and explicit `git submodule update --init --recursive` commands work
+normally. Without the options, initialization is unchanged.
+
+For repositories opened in Intent (rather than Intent's own source checkout),
+start the daemon with `INTENTD_SKIP_SUBMODULES=1` to skip automatic submodule
+cloning, hydration, and post-pull updates. This does not remove already populated
+submodules or prevent manual Git commands. The default remains recursive.
+
 `make test` and `make test-changed` isolate Cargo target and build outputs in
 stable `intent-gates/<checkout-id>` children of the configured directories.
 Repeated runs of the same canonical checkout reuse those outputs; another

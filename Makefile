@@ -39,6 +39,11 @@ INTENTD_DIR = packages/intentd
 FE_DIR = packages/cloudlands-fe
 IOS_DIR = packages/ios
 
+# Opt out of automatic source-checkout initialization, including bootstrap.
+# Explicit `git submodule update --init` commands remain available.
+SKIP_SUBMODULES ?= 0
+export SKIP_SUBMODULES
+
 # FE dependency freshness guard shared by every target that needs an installed
 # frontend tree. pnpm writes the lockfile it installed from to
 # node_modules/.pnpm/lock.yaml, so the tree is stale when that copy is missing
@@ -346,7 +351,8 @@ ensure-fe-toolchain: ensure-fe-submodule
 # credentials are cached); internal devs who want to authenticate
 # interactively can use `make ensure-ios-submodule`, which still prompts.
 ensure-submodules: ## Initialize any missing submodules — intentd, FE, iOS (idempotent; iOS is fail-soft)
-	@for sm in $(SUBMODULES); do \
+	@if [ "$(SKIP_SUBMODULES)" = 1 ]; then echo "[ensure-submodules] skipped (SKIP_SUBMODULES=1)"; exit 0; fi; \
+	for sm in $(SUBMODULES); do \
 		if [ ! -e "$$sm/.git" ]; then \
 			echo "[ensure-submodules] initializing $$sm"; \
 			if [ "$$sm" = "$(IOS_DIR)" ]; then \
@@ -364,7 +370,9 @@ ensure-submodules: ## Initialize any missing submodules — intentd, FE, iOS (id
 # (build/test/fmt/clippy/check and the daemon seats) need, keeping
 # backend-only workflows fast.
 ensure-intentd-submodule:
-	@if [ ! -e "$(INTENTD_DIR)/.git" ]; then \
+	@if [ "$(SKIP_SUBMODULES)" = 1 ]; then \
+		echo "[ensure-intentd-submodule] skipped (SKIP_SUBMODULES=1)"; \
+	elif [ ! -e "$(INTENTD_DIR)/.git" ]; then \
 		echo "[ensure-intentd-submodule] initializing $(INTENTD_DIR)"; \
 		git submodule update --init --recursive "$(INTENTD_DIR)"; \
 	else \
@@ -374,7 +382,9 @@ ensure-intentd-submodule:
 # On-demand init for the FE submodule — pulled in only by targets that need it
 # (`dev-fe`, `build-sidecar`, `dev`), so backend-only workflows stay fast.
 ensure-fe-submodule:
-	@if [ ! -e "$(FE_DIR)/.git" ]; then \
+	@if [ "$(SKIP_SUBMODULES)" = 1 ]; then \
+		echo "[ensure-fe-submodule] skipped (SKIP_SUBMODULES=1)"; \
+	elif [ ! -e "$(FE_DIR)/.git" ]; then \
 		echo "[ensure-fe-submodule] initializing $(FE_DIR)"; \
 		git submodule update --init --recursive "$(FE_DIR)"; \
 	else \
@@ -386,7 +396,9 @@ ensure-fe-submodule:
 # `update = none` in .gitmodules (set so external clones skip this private
 # repo) so it still initializes on machines with access.
 ensure-ios-submodule:
-	@if [ ! -e "$(IOS_DIR)/.git" ]; then \
+	@if [ "$(SKIP_SUBMODULES)" = 1 ]; then \
+		echo "[ensure-ios-submodule] skipped (SKIP_SUBMODULES=1)"; \
+	elif [ ! -e "$(IOS_DIR)/.git" ]; then \
 		echo "[ensure-ios-submodule] initializing $(IOS_DIR)"; \
 		git submodule update --init --checkout --recursive "$(IOS_DIR)"; \
 	else \

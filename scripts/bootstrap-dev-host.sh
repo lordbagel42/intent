@@ -82,6 +82,7 @@ PROBE_ERROR=""
 MODE=install
 ASSUME_YES=${BOOTSTRAP_YES:-0}
 WITH_COVERAGE=${BOOTSTRAP_COVERAGE:-0}
+SKIP_SUBMODULES=${SKIP_SUBMODULES:-0}
 FAILURES=0
 TOOLCHAIN=""
 PACKAGE_MANAGER=""
@@ -96,12 +97,13 @@ cleanup() {
 trap cleanup EXIT
 
 usage() {
-  echo "Usage: $0 [--check] [--check-frontend] [--coverage] [--yes]"
+  echo "Usage: $0 [--check] [--check-frontend] [--coverage] [--skip-submodules] [--yes]"
   echo "  --check            Report missing requirements without changing the host"
   echo "  --check-frontend   Report only the frontend toolchain gaps (Corepack + pinned pnpm)"
   echo "                     that block the dev/sandbox targets; exit 0 silently when ready"
   echo "  --coverage         Also install cargo-llvm-cov and llvm-tools-preview for"
   echo "                     make coverage-e2e / coverage-all (env alias: BOOTSTRAP_COVERAGE=1)"
+  echo "  --skip-submodules  Do not initialize missing submodules (env alias: SKIP_SUBMODULES=1)"
   echo "  --yes              Install without prompting"
 }
 
@@ -110,6 +112,7 @@ while [[ $# -gt 0 ]]; do
     --check) MODE=check ;;
     --check-frontend) MODE=check-frontend ;;
     --coverage) WITH_COVERAGE=1 ;;
+    --skip-submodules) SKIP_SUBMODULES=1 ;;
     --yes) ASSUME_YES=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ERROR: unknown option: $1" >&2; usage >&2; exit 2 ;;
@@ -861,6 +864,10 @@ install_native_build_dependencies() {
 }
 
 install_submodules() {
+  if [[ "$SKIP_SUBMODULES" == 1 ]]; then
+    echo "[skip] automatic submodule initialization disabled (SKIP_SUBMODULES=1)"
+    return
+  fi
   if required_submodules_ready; then
     echo "[skip] git submodules already initialized"
     return
