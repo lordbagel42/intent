@@ -678,4 +678,17 @@ expect_line "REST rate limited"
 expect_line "2026-09-28T09:18:41Z"
 expect_line "GraphQL authenticated"
 
+# Both the CLI flag and environment setting suppress bootstrap initialization,
+# even when the required component directories are missing.
+for option in flag env; do
+  SKIP_SUBMODULES=0
+  args=()
+  if [[ "$option" == flag ]]; then args=(--skip-submodules); else SKIP_SUBMODULES=1; fi
+  SKIP_SUBMODULES="$SKIP_SUBMODULES" INTENTD_DIR="$temp_dir/missing-intentd" FE_DIR="$temp_dir/missing-fe" \
+    bash -c 'funcs=$1; shift; source "$funcs"; install_submodules' bash "$bootstrap_funcs" "${args[@]}" >"$output" 2>&1 \
+    || fail "submodule opt-out failed ($option)"
+  expect_line "automatic submodule initialization disabled"
+  reject_line "[install]"
+done
+
 echo "bootstrap-dev-host tests passed"

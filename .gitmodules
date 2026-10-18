@@ -1,6 +1,6 @@
 [submodule "packages/intentd"]
 	path = packages/intentd
-	url = https://github.com/intent-hq/intentd.git
+	url = https://github.com/lordbagel42/intentd.git
 	branch = main
 [submodule "packages/cloudlands-fe"]
 	path = packages/cloudlands-fe
